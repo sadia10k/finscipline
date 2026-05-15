@@ -2,7 +2,7 @@
 
 A personal finance coach you talk to. Set up a budget, log spending, manage debt, and get actionable advice: all through natural conversation. No spreadsheets, no cloud sync, no account required beyond a local username.
 
-Built for **CPSC 254 – Applied AI**, Cal State Fullerton, Spring 2026.
+Built for **CPSC 254 – Applied AI**, Cal State Fullerton, Spring 2026 by Sadia Khan.
 
 ---
 
