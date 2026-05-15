@@ -1,6 +1,6 @@
 # Finscipline
 
-A personal finance coach you talk to. Set up a budget, log spending, manage debt, and get actionable advice — all through natural conversation. No spreadsheets, no cloud sync, no account required beyond a local username.
+A personal finance coach you talk to. Set up a budget, log spending, manage debt, and get actionable advice: all through natural conversation. No spreadsheets, no cloud sync, no account required beyond a local username.
 
 Built for **CPSC 254 – Applied AI**, Cal State Fullerton, Spring 2026.
 
@@ -8,14 +8,14 @@ Built for **CPSC 254 – Applied AI**, Cal State Fullerton, Spring 2026.
 
 ## What It Does
 
-- **Conversational budget setup** — tell the coach your income; it calculates a 50/30/20 split and creates all subcategories in one turn
-- **Spend tracking** — log transactions by talking ("I spent $47 at Costco on groceries") or via the Transactions tab form; edit and delete anytime
-- **Smart alerts** — over-budget, approaching-limit, low savings rate, high debt burden, and budget misalignment alerts with one-tap "Ask Coach" and "Auto Fix" actions
-- **Debt Snowball** — add debts, set an extra monthly payment, see a live paydown chart and month-by-month projections; edit or delete debts inline
-- **Quick-reply chips** — when the coach asks a question, clickable suggestion buttons appear so you rarely have to type
-- **RAG-backed advice** — finance tips drawn from a local embeddings index (CFPB, FTC, Investor.gov) validated by GPT before display; no live internet search
-- **Charts** — Budget vs. Actual bar chart, Spending by Type donut, Debt paydown line chart
-- **Multi-user** — each account's data is fully isolated; password reset via recovery code (no email)
+- **Conversational budget setup**: tell the coach your income; it calculates a 50/30/20 split and creates all subcategories in one turn
+- **Spend tracking**: log transactions by talking ("I spent $47 at Costco on groceries") or via the Transactions tab form; edit and delete anytime
+- **Smart alerts**: over-budget, approaching-limit, low savings rate, high debt burden, and budget misalignment alerts with one-tap "Ask Coach" and "Auto Fix" actions
+- **Debt Snowball**: add debts, set an extra monthly payment, see a live paydown chart and month-by-month projections; edit or delete debts inline
+- **Quick-reply chips**: when the coach asks a question, clickable suggestion buttons appear so you rarely have to type
+- **RAG-backed advice**: finance tips drawn from a local embeddings index (CFPB, FTC, Investor.gov) validated by GPT before display; no live internet search
+- **Charts**: Budget vs. Actual bar chart, Spending by Type donut, Debt paydown line chart
+- **Multi-user**: each account's data is fully isolated; password reset via recovery code (no email)
 
 ---
 
@@ -93,7 +93,7 @@ PYTHONPATH=. python3 eval/run_eval.py
 | Variable | Required | Description |
 | --- | --- | --- |
 | `OPENAI_API_KEY` | Yes | Powers the agent (gpt-4o-mini) and RAG embeddings |
-| `SESSION_SECRET` | Yes | Signs session cookies — use a long random string |
+| `SESSION_SECRET` | Yes | Signs session cookies: use a long random string |
 | `LOG_LEVEL` | No | `INFO` (default) or `DEBUG` |
 
 Generate a session secret:
@@ -109,7 +109,7 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 ```text
 finscipline/
 ├── finscipline.sh / finscipline.ps1   # Dev helper: setup / start / stop
-├── .env.example                        # Template — copy to .env, never commit .env
+├── .env.example                        # Template: copy to .env, never commit .env
 ├── backend/
 │   ├── main.py                         # FastAPI app, routes, notification engine
 │   ├── database.py                     # SQLite schema + connection pool
@@ -173,7 +173,7 @@ Browser (React + Vite)
     │         → GPT validation before display
     │
     └── All financial data stays local (SQLite)
-        Only LLM messages reach OpenAI — no raw PII
+        Only LLM messages reach OpenAI: no raw PII
 ```
 
 **Privacy design:** Each user gets a random `shadow_id` stored in a signed cookie. Every database query is scoped `WHERE shadow_id = ?`. The shadow_id never appears in LLM context, only in server-side tool calls. Prompt injection from client messages is blocked by stripping `role: system` from history.
@@ -184,7 +184,7 @@ Browser (React + Vite)
 
 ### 1. Create an account
 
-Click **Create account** on the lock screen. Save the recovery code — it's shown once.
+Click **Create account** on the lock screen. Save the recovery code: it's shown once.
 
 ### 2. Set up your budget
 
@@ -206,7 +206,7 @@ Or use the **Transactions** tab form directly.
 > "How am I doing this month?"  
 > "Am I over budget anywhere?"
 
-The coach retrieves live data and flags overages. When over budget, it lists categories with available funds — click a quick-reply chip to reallocate in one message.
+The coach retrieves live data and flags overages. When over budget, it lists categories with available funds: click a quick-reply chip to reallocate in one message.
 
 ### 5. Add and manage debt
 
@@ -235,15 +235,15 @@ Answers come from the local RAG index, validated by GPT before display.
 
 ### 8. Multi-user isolation
 
-Sign out, create a second account, log different transactions. Sign back into the first account — data is completely isolated.
+Sign out, create a second account, log different transactions. Sign back into the first account: data is completely isolated.
 
 ---
 
 ## Privacy & Security
 
 - All financial data is stored locally in `finscipline.db` (gitignored)
-- Only chat messages are sent to OpenAI — no account numbers, no raw balances outside of what you explicitly share in chat
+- Only chat messages are sent to OpenAI: no account numbers, no raw balances outside of what you explicitly share in chat
 - Session cookies are signed with `SESSION_SECRET`; the server never trusts the client to provide a user identity
 - Input validation on all API boundaries (amount ranges, income ranges, APR ranges)
-- Safe math: all arithmetic goes through an AST-based expression evaluator — no `eval()`
-- Designed for local use only — do not expose port 8000 or 5173 to the internet
+- Safe math: all arithmetic goes through an AST-based expression evaluator: no `eval()`
+- Designed for local use only: do not expose port 8000 or 5173 to the internet

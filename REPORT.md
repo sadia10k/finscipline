@@ -1,7 +1,7 @@
 # CPSC 254 Final Project Report: Finscipline
 
 ## 1. What & Why
-I built Finscipline because I wanted a personal finance coach that doesn't feel like a chore to use. Most budgeting apps require you to manually categorize every penny in a rigid spreadsheet. Finscipline is completely conversational, you just tell it things like "I spent 45 bucks at Target on groceries" or "How should I tackle my credit card debt?", and it handles all the database updates and math under the hood. It uses gpt-4o-mini with tool calling to make this happen.
+I built Finscipline because I wanted a personal finance coach that doesn't feel like a chore to use. Most budgeting apps require you to manually categorize every penny in a rigid spreadsheet. Finscipline is completely conversational. You just tell it things like "I spent 45 bucks at Target on groceries" or "How should I tackle my credit card debt?", and it handles all the database updates and math under the hood. It uses gpt-4o-mini with tool calling to make this happen.
 
 Getting the AI behavior right was honestly the hardest part of the project. LLMs naturally want to be overly helpful chatbots, which causes huge problems here. First, it would often just give encouraging advice when I actually needed it to trigger a specific tool (like logging an expense). Second, without tight constraints, it would happily give you cookie recipes or coding tips instead of staying focused on your money. I had to build a custom agent loop that forces the AI to choose between querying a local RAG database for finance tips, running strict database tools, or flat-out refusing the prompt.
 
@@ -23,7 +23,7 @@ Getting the AI behavior right was honestly the hardest part of the project. LLMs
 **Change**: I heavily updated the system prompt to include aggressive refusal constraints: "If the user asks about ANYTHING unrelated to personal finance, you MUST politely refuse to answer."
 **Motivating example**: Test #2 and Test #6 (asking how to build a PC) finally passed because the LLM recognized they were off-topic and refused them.
 **Delta**: Accuracy hit **70%**. 
-**Conclusion**: The prompt engineering worked perfectly. The remaining 30% of failures were actually edge cases in my eval script—for example, the agent failed to set an extra debt payment because my test database didn't have any debts loaded yet, so the LLM logically decided not to use the tool. In the future, I'd fix this by seeding the eval database with better mock data.
+**Conclusion**: The prompt engineering worked perfectly. The remaining 30% of failures were actually edge cases in my eval script. For example, the agent failed to set an extra debt payment because my test database didn't have any debts loaded yet, so the LLM logically decided not to use the tool. In the future, I'd fix this by seeding the eval database with better mock data.
 
 ## 3. Code Walkthrough
 When you type "I spent 50 bucks on groceries", the frontend hits the `/chat` API endpoint (`backend/main.py:364`). This route immediately hands the message off to my `run_agent` function over in `backend/agent/loop.py:22`. 
@@ -35,7 +35,7 @@ Once the LLM reads the prompt, it returns a `tool_calls` finish reason. My loop 
 ## 4. AI Disclosure & Safety
 I created the architecture and provided the design for this application, and I used an AI coding assistant with continuous updates to ensure it actually met the intent of my design. 
 
-The AI was super helpful for generating UI components and boilerplate, but it definitely created some massive headaches. For example, when I asked it to implement user login sessions, it created a global `_sessions = {}` Python dictionary. I caught this immediately—if I had shipped that, a user logging in would overwrite the session for everyone else, and people could literally see each other's financial data! I had to manually step in and force it to use cryptographically signed `HttpOnly` cookies instead. Another time, the AI's math for the Debt Snowball was completely wrong because it was just estimating interest instead of using the proper closed-form compound interest formula, which broke my paydown charts until I corrected it.
+The AI was super helpful for generating UI components and boilerplate, but it definitely created some massive headaches. For example, when I asked it to implement user login sessions, it created a global `_sessions = {}` Python dictionary. I caught this immediately. If I had shipped that, a user logging in would overwrite the session for everyone else, and people could literally see each other's financial data! I had to manually step in and force it to use cryptographically signed `HttpOnly` cookies instead. Another time, the AI's math for the Debt Snowball was completely wrong because it was just estimating interest instead of using the proper closed-form compound interest formula, which broke my paydown charts until I corrected it.
 
 **Safety Risk**: 
 The biggest safety risk for this app is **PII (Personally Identifiable Information) exposure**. We are taking people's sensitive financial situations (their income, debt balances, and spending habits) and sending that text to OpenAI's API to generate responses.
