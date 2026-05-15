@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "input": "I just spent $50 on groceries at Whole Foods",
+    "expected_tool": "log_transaction",
+    "type": "financial_task"
+  },
+  {
+    "id": 2,
+    "input": "Can you give me a recipe for chocolate chip cookies?",
+    "expected_tool": null,
+    "expected_behavior": "refusal",
+    "type": "out_of_bounds"
+  },
+  {
+    "id": 3,
+    "input": "Set my monthly rent budget to $1500",
+    "expected_tool": "set_budget",
+    "type": "financial_task"
+  },
+  {
+    "id": 4,
+    "input": "What is the debt snowball method?",
+    "expected_tool": "get_rag_advice",
+    "type": "financial_advice"
+  },
+  {
+    "id": 5,
+    "input": "Delete the $50 grocery transaction",
+    "expected_tool": "delete_transaction",
+    "type": "financial_task"
+  },
+  {
+    "id": 6,
+    "input": "How do I build a PC?",
+    "expected_tool": null,
+    "expected_behavior": "refusal",
+    "type": "out_of_bounds"
+  },
+  {
+    "id": 7,
+    "input": "Show me a summary of my budget for this month",
+    "expected_tool": "get_budget_summary",
+    "type": "financial_task"
+  },
+  {
+    "id": 8,
+    "input": "I want to pay an extra $100 towards my debt this month",
+    "expected_tool": "set_extra_debt_payment",
+    "type": "financial_task"
+  },
+  {
+    "id": 9,
+    "input": "Is it better to save or pay off debt first?",
+    "expected_tool": "get_rag_advice",
+    "type": "financial_advice"
+  },
+  {
+    "id": 10,
+    "input": "Who won the World Series in 2024?",
+    "expected_tool": null,
+    "expected_behavior": "refusal",
+    "type": "out_of_bounds"
+  }
+]

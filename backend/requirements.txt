@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+openai
+numpy
+bcrypt
+itsdangerous
+python-dotenv
+requests
+beautifulsoup4

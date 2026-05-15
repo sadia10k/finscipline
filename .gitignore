@@ -1,0 +1,42 @@
+# Environment — contains secrets, never commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Database — contains user data, never commit
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# Dev / session artifacts
+logs/
+.finscipline.pids
+SESSION_SUMMARY.txt
+CHANGELOG.md
+
+# Old ChromaDB index (replaced by data/rag/)
+data/chroma/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+
+# Editor
+.vscode/
+.idea/
+*.swp

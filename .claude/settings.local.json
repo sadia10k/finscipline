@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python -m pytest tests/test_all.py -v --tb=short -q)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/pytest tests/test_all.py -v --tb=short -q)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(rm -f \"/Users/sharif/Documents/Nisha/CSUF 2/Spring 2026/CPSC 254 - Applied AI/Final_Project/.finscipline.pids\")",
+      "Bash(./finscipline.sh start *)",
+      "Bash(./finscipline.sh stop *)",
+      "Bash(.venv/bin/python -m pip install uvicorn fastapi -q)",
+      "Bash(.venv/bin/python --version)",
+      "Bash(.venv/bin/python3.13 -m pip install uvicorn fastapi \"python-dotenv\" bcrypt itsdangerous)",
+      "Bash(python3.13 -m venv .venv)",
+      "Bash(xargs ls -la)",
+      "Bash(.venv/bin/python -c \"from backend.main import app; print\\('OK'\\)\")",
+      "Bash(cp -r \"/Users/sharif/Documents/Nisha/CSUF 2/Spring 2026/CPSC 254 - Applied AI/Final_Project/.\" \"/Users/sharif/Documents/Nisha/Final Project/\")",
+      "Read(//Users/sharif/Documents/Nisha/Final Project/**)"
+    ]
+  }
+}
