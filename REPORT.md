@@ -1,7 +1,7 @@
 # CPSC 254 Final Project Report: Finscipline
 
 ## 1. What & Why
-I built Finscipline because I wanted a personal finance coach that doesn't feel like a chore to use. Most budgeting apps require you to manually categorize every penny in a rigid spreadsheet. Finscipline is completely conversational—you just tell it things like "I spent 45 bucks at Target on groceries" or "How should I tackle my credit card debt?", and it handles all the database updates and math under the hood. It uses gpt-4o-mini with tool calling to make this happen.
+I built Finscipline because I wanted a personal finance coach that doesn't feel like a chore to use. Most budgeting apps require you to manually categorize every penny in a rigid spreadsheet. Finscipline is completely conversational, you just tell it things like "I spent 45 bucks at Target on groceries" or "How should I tackle my credit card debt?", and it handles all the database updates and math under the hood. It uses gpt-4o-mini with tool calling to make this happen.
 
 Getting the AI behavior right was honestly the hardest part of the project. LLMs naturally want to be overly helpful chatbots, which causes huge problems here. First, it would often just give encouraging advice when I actually needed it to trigger a specific tool (like logging an expense). Second, without tight constraints, it would happily give you cookie recipes or coding tips instead of staying focused on your money. I had to build a custom agent loop that forces the AI to choose between querying a local RAG database for finance tips, running strict database tools, or flat-out refusing the prompt.
 
