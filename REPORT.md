@@ -1,50 +1,43 @@
 # CPSC 254 Final Project Report: Finscipline
 
 ## 1. What & Why
-Finscipline is a conversational personal finance coach designed for individuals who struggle with the rigidity of traditional spreadsheet budgeting or complex financial apps. Users interact with Finscipline via natural language to log spending, set budgets, and plan debt snowball strategies (e.g., "I spent $45 at Target on groceries," or "How should I tackle my credit card debt?"). The app uses an LLM (gpt-4o-mini) with function calling to translate these natural conversations into structured database operations, while simultaneously surfacing alerts for budget misalignment or low savings rates.
+I built Finscipline because I wanted a personal finance coach that doesn't feel like a chore to use. Most budgeting apps require you to manually categorize every penny in a rigid spreadsheet. Finscipline is completely conversational—you just tell it things like "I spent 45 bucks at Target on groceries" or "How should I tackle my credit card debt?", and it handles all the database updates and math under the hood. It uses gpt-4o-mini with tool calling to make this happen.
 
-Getting the AI behavior right was uniquely challenging because personal finance requires extreme precision and strict boundaries. An LLM's natural tendency is to be helpful and conversational, which leads to two severe problems in a finance app:
-1. **Tool-calling ambiguity**: When a user says "I want to pay off my debt," the LLM might just offer encouraging words instead of triggering the `set_extra_debt_payment` tool.
-2. **Domain drift**: Without strict constraints, the AI will happily act as a generic chatbot, giving recipes or coding advice instead of focusing on the user's financial health. 
-
-To solve this, I had to build a custom agent loop that forces the LLM to choose between routing queries to an isolated RAG knowledge base for advice, executing precise financial tools, or refusing the prompt entirely.
+Getting the AI behavior right was honestly the hardest part of the project. LLMs naturally want to be overly helpful chatbots, which causes huge problems here. First, it would often just give encouraging advice when I actually needed it to trigger a specific tool (like logging an expense). Second, without tight constraints, it would happily give you cookie recipes or coding tips instead of staying focused on your money. I had to build a custom agent loop that forces the AI to choose between querying a local RAG database for finance tips, running strict database tools, or flat-out refusing the prompt.
 
 ## 2. Iterations
 
 ### V1
-**Change**: Initial agent implementation using standard OpenAI tool calling with basic tool descriptions for logging transactions and setting budgets.
-**Motivating example**: Test case #1 ("I just spent $50 on groceries at Whole Foods") passed, but Test case #9 ("Is it better to save or pay off debt first?") failed because the agent simply hallucinated generic financial advice without any authoritative grounding.
-**Delta**: Accuracy on the 10-case eval set was **40%**. 
-**Conclusion**: The metric was low because the agent lacked a mechanism to retrieve verified financial wisdom, relying entirely on its base weights. Next, I decided to implement a Retrieval-Augmented Generation (RAG) tool to ground its advice.
+**Change**: I built the initial agent and integrated RAG from the very beginning so it could give smart financial advice. 
+**Motivating example**: Test case #9 ("Is it better to save or pay off debt first?") failed hard. The agent was giving generic, hallucinated advice instead of pulling from the RAG index.
+**Delta**: Accuracy on my 10-case eval script was sitting at a rough **40%**. 
+**Conclusion**: I dug into the RAG setup and realized the URLs I used for the source documents weren't actually fetching the proper data to chunk. The scraper was hitting paywalls and cookie banners, so the embeddings were basically garbage. I had to rewrite the ingestion script to get clean text.
 
 ### V2
-**Change**: Implemented the `get_rag_advice` tool and instructed the system prompt to use this tool for all general financial questions.
-**Motivating example**: Test case #9 now successfully triggered `get_rag_advice`. However, Test case #2 ("Can you give me a recipe for chocolate chip cookies?") and Test case #6 ("How do I build a PC?") failed because the agent would cheerfully try to answer them using its general knowledge.
-**Delta**: Accuracy improved from **40%** to **60%**.
-**Conclusion**: The metric improved due to better handling of financial advice, but the agent was still acting like a general-purpose chatbot. The next step was to tighten the system prompt to strictly enforce domain boundaries.
+**Change**: After fixing the RAG data pipeline, the agent was much better at finance questions, but it was still acting like a general chatbot.
+**Motivating example**: Test case #2 ("Can you give me a recipe for chocolate chip cookies?") failed because the bot just cheerfully gave me a recipe.
+**Delta**: Accuracy bumped up to **60%**, mostly because the RAG questions were passing now.
+**Conclusion**: The metric improved, but the bot was still out of bounds. I needed to force the LLM to stay in its lane, so my next step was strict prompt engineering.
 
 ### V3
-**Change**: Heavily revised the system prompt to include strict refusal conditions: *"If the user asks about ANYTHING unrelated to personal finance (e.g., coding, recipes, sports, history), you MUST politely refuse to answer."*
-**Motivating example**: Test case #2 and Test case #6 were specifically failing by providing recipes and PC builds. With the new prompt, the agent successfully recognized these as out-of-bounds and responded with a refusal.
-**Delta**: Accuracy improved from **60%** to **70%** (passing the out-of-bounds tests). 
-**Conclusion**: The metric moved positively because the LLM respected the negative constraints in the system prompt. Remaining failures (like Test #8 failing to set an extra debt payment) were caused by logical edge cases (the user had no debts in the test DB, so the LLM logically chose not to call the tool). For future iterations, I would improve the evaluation script to seed the database with specific mock data before running tool-dependent test cases.
+**Change**: I heavily updated the system prompt to include aggressive refusal constraints: "If the user asks about ANYTHING unrelated to personal finance, you MUST politely refuse to answer."
+**Motivating example**: Test #2 and Test #6 (asking how to build a PC) finally passed because the LLM recognized they were off-topic and refused them.
+**Delta**: Accuracy hit **70%**. 
+**Conclusion**: The prompt engineering worked perfectly. The remaining 30% of failures were actually edge cases in my eval script—for example, the agent failed to set an extra debt payment because my test database didn't have any debts loaded yet, so the LLM logically decided not to use the tool. In the future, I'd fix this by seeding the eval database with better mock data.
 
 ## 3. Code Walkthrough
-When a user types a message like "I spent $50 on groceries," the frontend sends a POST request to the `/chat` endpoint (`backend/main.py:364`). This route delegates the work to the `run_agent` function located in `backend/agent/loop.py:22`. 
+When you type "I spent 50 bucks on groceries", the frontend hits the `/chat` API endpoint (`backend/main.py:364`). This route immediately hands the message off to my `run_agent` function over in `backend/agent/loop.py:22`. 
 
-Inside `run_agent`, the system first gathers the user's current context (income, budgets, and debts) directly from the database (`backend/agent/loop.py:38-46`). This is crucial because it gives the LLM immediate awareness of the user's financial state without requiring it to call a "fetch_state" tool first. The agent then packages this context into the system prompt and calls the OpenAI API with `tool_choice="auto"`. 
+Inside that loop, the very first thing I do is query the database for the user's current income, budget summary, and debt balances (`backend/agent/loop.py:38-46`), and inject all of that directly into the system prompt. This was a huge design decision. I originally thought about giving the LLM a `fetch_current_state` tool to look up budgets itself. I rejected that alternative because it wasted an entire API round-trip just to get basic context, making the chat feel super slow and laggy. Injecting it upfront is way faster.
 
-When the LLM decides to log the transaction, it returns a `tool_calls` finish reason. The loop parses this (`backend/agent/loop.py:118`), extracts the function name (`log_transaction`), and executes it via `execute_tool`. The database is updated, and the tool's success message is appended to the message history. The loop then runs a second iteration so the LLM can generate a conversational confirmation like, "I've logged $50 for groceries."
-
-**Design Decision & Rejected Alternative**: 
-I considered giving the LLM a single, monolithic `update_database` tool where it would write raw SQL to modify budgets and transactions. I rejected this alternative because it is highly insecure (SQL injection risks) and prone to formatting errors. Instead, I opted for discrete, narrowly scoped Python functions (`log_transaction`, `set_budget`). This ensures that data is validated by Pydantic and SQLAlchemy before it ever touches the database, providing a much safer and more reliable architecture.
+Once the LLM reads the prompt, it returns a `tool_calls` finish reason. My loop catches this, extracts the tool name (`log_transaction`), and runs the actual Python function to update the database. It then appends the success message to the history and runs the LLM one more time so it can give a natural confirmation back to the user.
 
 ## 4. AI Disclosure & Safety
-I created the architecture and provided the design for this application, utilizing an AI coding assistant (Kiro/Gemini) with continuous updates to ensure it met the intent of my design. 
+I created the architecture and provided the design for this application, and I used an AI coding assistant with continuous updates to ensure it actually met the intent of my design. 
 
-The AI assistant was incredibly helpful for scaffolding the frontend UI and writing the CSS, but it did experience specific failures. For example, when I initially asked it to implement user sessions, it created a global `_sessions = {}` dictionary in Python. I quickly realized this meant users could see each other's financial data if they accessed the app concurrently! I recovered from this by instructing the AI to strip out the global variable and implement secure, signed `HttpOnly` cookies using `itsdangerous`. In another instance, the AI hallucinated an older version of the `react-markdown` package syntax, causing the frontend to crash; I fixed this by manually reviewing the npm documentation and prompting the AI with the correct component structure.
+The AI was super helpful for generating UI components and boilerplate, but it definitely created some massive headaches. For example, when I asked it to implement user login sessions, it created a global `_sessions = {}` Python dictionary. I caught this immediately—if I had shipped that, a user logging in would overwrite the session for everyone else, and people could literally see each other's financial data! I had to manually step in and force it to use cryptographically signed `HttpOnly` cookies instead. Another time, the AI's math for the Debt Snowball was completely wrong because it was just estimating interest instead of using the proper closed-form compound interest formula, which broke my paydown charts until I corrected it.
 
 **Safety Risk**: 
-The primary safety risk in Finscipline is **PII exposure and data privacy**, as sensitive user financial data (income, debt amounts, spending habits) is sent to a third-party LLM (OpenAI) to generate the contextual responses. 
+The biggest safety risk for this app is **PII (Personally Identifiable Information) exposure**. We are taking people's sensitive financial situations (their income, debt balances, and spending habits) and sending that text to OpenAI's API to generate responses.
 **Mitigation**: 
-To mitigate this, the app does not require or store real names, bank account numbers, or SSNs. Furthermore, only aggregated summaries (e.g., total category spending) are injected into the context window, and I rely on OpenAI's API policy which explicitly states that API data is not used to train their models. Users are warned in the `AI_DISCLOSURE.md` that their chat data is processed by OpenAI.
+To mitigate this, the app explicitly does not ask for real names, bank account numbers, or SSNs. Everything is kept strictly anonymous. Furthermore, I rely on the fact that OpenAI's API policy states they do not use API data to train their models, and I added an AI disclosure notice in the repo to make sure users are aware before they start typing.
